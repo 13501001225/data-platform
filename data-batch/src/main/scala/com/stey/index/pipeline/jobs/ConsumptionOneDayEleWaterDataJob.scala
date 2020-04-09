@@ -1,5 +1,7 @@
 package com.stey.index.pipeline.jobs
 
+import com.stey.index.pipeline.modules.SparkModule
+import com.stey.index.pipeline.utils.DateTimeUtil._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
@@ -17,6 +19,7 @@ object ConsumptionOneDayEleWaterDataJob extends SparkModule {
     val getActualDateKey = udf((dateTimeKey : String) => {
       getActualDateTime(dateTimeKey)
     })
+    import spark.implicits._
     val readEleWaterDeviceRedisDf = spark.read
       .format("org.apache.spark.sql.redis")
       .option("infer.schema", true)
@@ -27,8 +30,8 @@ object ConsumptionOneDayEleWaterDataJob extends SparkModule {
     val keyspace = "iot_data_warehouse"
     val table_name = "ele_water_one_hour"
     val columns_space_id = Seq("space_id","zone_device_id","zone_device_control_id")
-//    val date_num = args(0).toInt
-//    val appointed = args(1)
+    //    val date_num = args(0).toInt
+    //    val appointed = args(1)
     val appointed = getrealTime()
     val date_num = 1
     val number_arr = 0 until date_num

@@ -1,5 +1,7 @@
 package com.stey.index.pipeline.jobs
 
+import com.stey.index.pipeline.modules.SparkModule
+import com.stey.index.pipeline.utils.DateTimeUtil._
 import org.apache.spark.sql.functions.{current_date, _}
 
 /**
@@ -42,6 +44,8 @@ object ConsumptionTargetEleWaterDataJob extends SparkModule {
         space_id.toLong
       }
     })
+
+    import spark.implicits._
 
 
     val usingColumns_order_history = Seq("order_id")
@@ -166,114 +170,114 @@ object ConsumptionTargetEleWaterDataJob extends SparkModule {
       .selectExpr("order_id", "order_number", "date", "dateTime as date_time_key", "user_name", "room", "on_rerent", "space_id", "status_c")
       .distinct()
       .sort(desc("date_time_key"))
-//    val current_day_on_rerent = order_DF.first().getAs[Boolean]("on_rerent")
-//    val current_day_order_id = order_DF.first().getAs[Long]("order_id")
-//    val current_day_date = order_DF.first().getAs[String]("date")
+    //    val current_day_on_rerent = order_DF.first().getAs[Boolean]("on_rerent")
+    //    val current_day_order_id = order_DF.first().getAs[Long]("order_id")
+    //    val current_day_date = order_DF.first().getAs[String]("date")
 
-//    val sql_ele_water_table = "iot.ele_water_every_hour"
-//    val ele_water_base_DF = spark.read.jdbc(sqlDwProperties.getProperty("url"), sql_ele_water_table, sqlDwProperties)
-//      .select("space_id", "zone_device_id", "zone_device_control_id", "current_value", "average_value", "accumulate_value", "last_value", "date_key", "date_time_key", "device_type", "zone_device_code")
-//      .withColumn("current_date", date_sub(current_date(), num - 3))
-//      .withColumn("last_month_date", date_sub(col("current_date"), 32))
-//      .withColumn("diff_date", datediff(col("current_date"), col("last_month_date")))
-//      .where("diff_date >= 0")
-//      .join(order_DF, usingColumns_order_ele_water, "right")
-//      .withColumn("actual_date_key", actualDate(col("date_time_key")))
-//      .select("order_id", "order_number", "space_id", "actual_date_key", "date_key", "date_time_key", "user_name", "room", "on_rerent", "zone_device_id", "zone_device_control_id", "device_type", "zone_device_code", "current_value", "average_value", "accumulate_value", "last_value")
-//      .sort(asc("order_id"), asc("space_id"), asc("zone_device_id"), asc("zone_device_control_id"), asc("actual_date_key"), asc("date_time_key"))
+    //    val sql_ele_water_table = "iot.ele_water_every_hour"
+    //    val ele_water_base_DF = spark.read.jdbc(sqlDwProperties.getProperty("url"), sql_ele_water_table, sqlDwProperties)
+    //      .select("space_id", "zone_device_id", "zone_device_control_id", "current_value", "average_value", "accumulate_value", "last_value", "date_key", "date_time_key", "device_type", "zone_device_code")
+    //      .withColumn("current_date", date_sub(current_date(), num - 3))
+    //      .withColumn("last_month_date", date_sub(col("current_date"), 32))
+    //      .withColumn("diff_date", datediff(col("current_date"), col("last_month_date")))
+    //      .where("diff_date >= 0")
+    //      .join(order_DF, usingColumns_order_ele_water, "right")
+    //      .withColumn("actual_date_key", actualDate(col("date_time_key")))
+    //      .select("order_id", "order_number", "space_id", "actual_date_key", "date_key", "date_time_key", "user_name", "room", "on_rerent", "zone_device_id", "zone_device_control_id", "device_type", "zone_device_code", "current_value", "average_value", "accumulate_value", "last_value")
+    //      .sort(asc("order_id"), asc("space_id"), asc("zone_device_id"), asc("zone_device_control_id"), asc("actual_date_key"), asc("date_time_key"))
 
-//    ele_water_base_DF.printSchema()
-//    ele_water_base_DF.show(1000)
-//    val ele_water_base_RDD = ele_water_base_DF.rdd
-//    val ele_water_reduce_RDD = ele_water_base_RDD.map(row => {
-//      val order_id = row.getAs[Long]("order_id")
-//      val order_number = row.getAs[String]("order_number")
-//      val space_id = row.getAs[Long]("space_id")
-//      val actual_date_key = row.getAs[String]("actual_date_key")
-//      val date_time_key = row.getAs[String]("date_time_key")
-//      val user_name = row.getAs[String]("user_name")
-//      val room = row.getAs[String]("room")
-//      val on_rerent = row.getAs[Boolean]("on_rerent")
-//      val zone_device_id = row.getAs[Long]("zone_device_id")
-//      val zone_device_control_id = row.getAs[Long]("zone_device_control_id")
-//      val device_type = row.getAs[String]("device_type")
-//      val zone_device_code = row.getAs[String]("zone_device_code")
-//      val current_value = row.getAs[Double]("current_value")
-//      val accumulate_value = row.getAs[Double]("accumulate_value")
-//      val last_value = row.getAs[Double]("last_value")
-//      val key = s"${actual_date_key}-${order_id}-${device_type}"
-//      (key, (on_rerent, current_value, last_value, accumulate_value, order_id, order_number, space_id, user_name, room, zone_device_id, zone_device_control_id, device_type, zone_device_code, actual_date_key, date_time_key))
-//    }).reduceByKey((x1, x2) => {
-//      val accumulate_value_bef = Decimal(x1._4)
-//      val accumulate_value_curr = Decimal(x2._4)
-//      val accumulate_value = (accumulate_value_bef + accumulate_value_curr).toDouble
-//      (x2._1, x2._2, x2._3, accumulate_value, x2._5, x2._6, x2._7, x2._8, x2._9, x2._10, x2._11, x2._12, x2._13, x2._14, x2._15)
-//    })
-//    val ele_water_reduce_day_RDD = ele_water_reduce_RDD.map(tup => {
-//      val on_rerent = tup._2._1
-//      val current_value = tup._2._2
-//      val last_value = tup._2._3
-//      val accumulate_value = tup._2._4
-//      val order_id = tup._2._5
-//      val order_number = tup._2._6
-//      val space_id = tup._2._7
-//      val user_name = tup._2._8
-//      val room = tup._2._9
-//      val zone_device_id = tup._2._10
-//      val zone_device_control_id = tup._2._11
-//      val device_type = tup._2._12
-//      val zone_device_code = tup._2._13
-//      val actual_date_key = tup._2._14
-//      val key = s"${order_id}-${device_type}-${on_rerent}"
-//      (key, (on_rerent, current_value, last_value, accumulate_value, order_id, order_number, space_id, user_name, room, zone_device_id, zone_device_control_id, device_type, zone_device_code, actual_date_key, 1))
-//    }).reduceByKey((x1, x2) => {
-//      val accumulate_value_bef = Decimal(x1._4)
-//      val accumulate_value_curr = Decimal(x2._4)
-//      val accumulate_value = (accumulate_value_bef + accumulate_value_curr).toDouble
-//      (x2._1, x2._2, x2._3, accumulate_value, current_day_order_id, x2._6, x2._7, x2._8, x2._9, x2._10, x2._11, x2._12, x2._13, current_day_date, x1._15 + x2._15)
-//    }).filter(tup=>{
-//      !tup._2._1
-//    }).map(tup=>{
-//      val on_rerent = tup._2._1
-//      val consumption = tup._2._4
-//      val order_id = tup._2._5
-//      val order_number = tup._2._6
-//      val space_id = tup._2._7
-//      val user_name = tup._2._8
-//      val room = tup._2._9
-//      val zone_device_id = tup._2._10
-//      val zone_device_control_id = tup._2._11
-//      val device_type = tup._2._12
-//      val zone_device_code = tup._2._13
-//      val actual_date_key = tup._2._14
-//      val create_at = getrealTime("yyyy-MM-dd HH:mm:ss")
-//      Row(order_id,order_number,user_name,consumption,current_day_on_rerent,room,space_id,zone_device_id,zone_device_control_id,device_type,zone_device_code,actual_date_key,create_at)
-//    })
-//
-//    val reduceEleWaterDFSchema = StructType(
-//      Seq(
-//        StructField("order_id", LongType, false),
-//        StructField("order_number", StringType, false),
-//        StructField("user_name", StringType, false),
-//        StructField("consumption", DoubleType, false),
-//        StructField("on_rerent", BooleanType, false),
-//        StructField("room", StringType, false),
-//        StructField("space_id", LongType, false),
-//        StructField("zone_device_id", LongType, false),
-//        StructField("zone_device_control_id", LongType, false),
-//        StructField("device_type", StringType, false),
-//        StructField("zone_device_code", StringType, false),
-//        StructField("date_key", StringType, false),
-//        StructField("created_at", StringType, false)
-//      )
-//    )
-//    val sqlServerTable_consumption_target_data_dw = "iot.consumption_target_data"
-//    val consumptionTargetDataDF = spark.createDataFrame(ele_water_reduce_day_RDD, reduceEleWaterDFSchema)
-//    if (!consumptionTargetDataDF.isEmpty) {
-//      consumptionTargetDataDF
-//        .write
-//        .mode("append")
-//        .jdbc(sqlServerUrl_dw, sqlServerTable_consumption_target_data_dw, sqlServerProp_dw)
-//    }
+    //    ele_water_base_DF.printSchema()
+    //    ele_water_base_DF.show(1000)
+    //    val ele_water_base_RDD = ele_water_base_DF.rdd
+    //    val ele_water_reduce_RDD = ele_water_base_RDD.map(row => {
+    //      val order_id = row.getAs[Long]("order_id")
+    //      val order_number = row.getAs[String]("order_number")
+    //      val space_id = row.getAs[Long]("space_id")
+    //      val actual_date_key = row.getAs[String]("actual_date_key")
+    //      val date_time_key = row.getAs[String]("date_time_key")
+    //      val user_name = row.getAs[String]("user_name")
+    //      val room = row.getAs[String]("room")
+    //      val on_rerent = row.getAs[Boolean]("on_rerent")
+    //      val zone_device_id = row.getAs[Long]("zone_device_id")
+    //      val zone_device_control_id = row.getAs[Long]("zone_device_control_id")
+    //      val device_type = row.getAs[String]("device_type")
+    //      val zone_device_code = row.getAs[String]("zone_device_code")
+    //      val current_value = row.getAs[Double]("current_value")
+    //      val accumulate_value = row.getAs[Double]("accumulate_value")
+    //      val last_value = row.getAs[Double]("last_value")
+    //      val key = s"${actual_date_key}-${order_id}-${device_type}"
+    //      (key, (on_rerent, current_value, last_value, accumulate_value, order_id, order_number, space_id, user_name, room, zone_device_id, zone_device_control_id, device_type, zone_device_code, actual_date_key, date_time_key))
+    //    }).reduceByKey((x1, x2) => {
+    //      val accumulate_value_bef = Decimal(x1._4)
+    //      val accumulate_value_curr = Decimal(x2._4)
+    //      val accumulate_value = (accumulate_value_bef + accumulate_value_curr).toDouble
+    //      (x2._1, x2._2, x2._3, accumulate_value, x2._5, x2._6, x2._7, x2._8, x2._9, x2._10, x2._11, x2._12, x2._13, x2._14, x2._15)
+    //    })
+    //    val ele_water_reduce_day_RDD = ele_water_reduce_RDD.map(tup => {
+    //      val on_rerent = tup._2._1
+    //      val current_value = tup._2._2
+    //      val last_value = tup._2._3
+    //      val accumulate_value = tup._2._4
+    //      val order_id = tup._2._5
+    //      val order_number = tup._2._6
+    //      val space_id = tup._2._7
+    //      val user_name = tup._2._8
+    //      val room = tup._2._9
+    //      val zone_device_id = tup._2._10
+    //      val zone_device_control_id = tup._2._11
+    //      val device_type = tup._2._12
+    //      val zone_device_code = tup._2._13
+    //      val actual_date_key = tup._2._14
+    //      val key = s"${order_id}-${device_type}-${on_rerent}"
+    //      (key, (on_rerent, current_value, last_value, accumulate_value, order_id, order_number, space_id, user_name, room, zone_device_id, zone_device_control_id, device_type, zone_device_code, actual_date_key, 1))
+    //    }).reduceByKey((x1, x2) => {
+    //      val accumulate_value_bef = Decimal(x1._4)
+    //      val accumulate_value_curr = Decimal(x2._4)
+    //      val accumulate_value = (accumulate_value_bef + accumulate_value_curr).toDouble
+    //      (x2._1, x2._2, x2._3, accumulate_value, current_day_order_id, x2._6, x2._7, x2._8, x2._9, x2._10, x2._11, x2._12, x2._13, current_day_date, x1._15 + x2._15)
+    //    }).filter(tup=>{
+    //      !tup._2._1
+    //    }).map(tup=>{
+    //      val on_rerent = tup._2._1
+    //      val consumption = tup._2._4
+    //      val order_id = tup._2._5
+    //      val order_number = tup._2._6
+    //      val space_id = tup._2._7
+    //      val user_name = tup._2._8
+    //      val room = tup._2._9
+    //      val zone_device_id = tup._2._10
+    //      val zone_device_control_id = tup._2._11
+    //      val device_type = tup._2._12
+    //      val zone_device_code = tup._2._13
+    //      val actual_date_key = tup._2._14
+    //      val create_at = getrealTime("yyyy-MM-dd HH:mm:ss")
+    //      Row(order_id,order_number,user_name,consumption,current_day_on_rerent,room,space_id,zone_device_id,zone_device_control_id,device_type,zone_device_code,actual_date_key,create_at)
+    //    })
+    //
+    //    val reduceEleWaterDFSchema = StructType(
+    //      Seq(
+    //        StructField("order_id", LongType, false),
+    //        StructField("order_number", StringType, false),
+    //        StructField("user_name", StringType, false),
+    //        StructField("consumption", DoubleType, false),
+    //        StructField("on_rerent", BooleanType, false),
+    //        StructField("room", StringType, false),
+    //        StructField("space_id", LongType, false),
+    //        StructField("zone_device_id", LongType, false),
+    //        StructField("zone_device_control_id", LongType, false),
+    //        StructField("device_type", StringType, false),
+    //        StructField("zone_device_code", StringType, false),
+    //        StructField("date_key", StringType, false),
+    //        StructField("created_at", StringType, false)
+    //      )
+    //    )
+    //    val sqlServerTable_consumption_target_data_dw = "iot.consumption_target_data"
+    //    val consumptionTargetDataDF = spark.createDataFrame(ele_water_reduce_day_RDD, reduceEleWaterDFSchema)
+    //    if (!consumptionTargetDataDF.isEmpty) {
+    //      consumptionTargetDataDF
+    //        .write
+    //        .mode("append")
+    //        .jdbc(sqlServerUrl_dw, sqlServerTable_consumption_target_data_dw, sqlServerProp_dw)
+    //    }
   }
 }
